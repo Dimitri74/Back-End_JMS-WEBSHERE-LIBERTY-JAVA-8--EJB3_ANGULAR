@@ -1,0 +1,4 @@
+body { font-family: Roboto, Arial, sans-serif; background:#f8f9fa; }
+.card-header { background:#007bff; color:white; }
+.badge-processed { background:#28a745; }
+.badge-pending { background:#ffc107; color:#212529; }

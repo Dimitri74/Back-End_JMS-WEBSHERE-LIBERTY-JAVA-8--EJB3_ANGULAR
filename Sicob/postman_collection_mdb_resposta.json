@@ -1,0 +1,200 @@
+{
+  "info": {
+    "_postman_id": "mdb-resposta-test-2024",
+    "name": "Teste MDB de Resposta - Sicob",
+    "description": "Collection para testar o fluxo completo de MDB com resposta no WebSphere Liberty",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Criar Pedido (com aguarda MDB)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cliente\": \"Cliente Teste MDB\",\n  \"produto\": \"Produto Teste\",\n  \"quantidade\": 5\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9080/pedidos-backend/api/pedidos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "pedidos-backend",
+            "api",
+            "pedidos"
+          ]
+        },
+        "description": "Cria um novo pedido e aguarda a resposta do MDB (30s timeout)\n\nEsperado:\n- Status: 201 CREATED\n- Body: Pedido com status=\"PROCESSADO\"\n- Header: X-MDB-Status: SUCESSO\n\nLogs esperados no console Liberty:\n[REST] Criando novo pedido...\n[PRODUCER] Mensagem enviada com sucesso para a fila.\n[MDB_CONSUMER] ===== MENSAGEM RECEBIDA NO MDB! =====\n[MDB_CONSUMER] Pedido processado com sucesso\n[RESPOSTA_CONSUMER] Resposta encontrada!"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Listar Todos os Pedidos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:9080/pedidos-backend/api/pedidos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "pedidos-backend",
+            "api",
+            "pedidos"
+          ]
+        },
+        "description": "Lista todos os pedidos criados\n\nEsperado:\n- Status: 200 OK\n- Body: Array de pedidos com status=\"PROCESSADO\""
+      },
+      "response": []
+    },
+    {
+      "name": "3. Obter Pedido por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:9080/pedidos-backend/api/pedidos/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "pedidos-backend",
+            "api",
+            "pedidos",
+            "1"
+          ]
+        },
+        "description": "Busca um pedido específico pelo ID\n\nEsperado:\n- Status: 200 OK\n- Body: Pedido com ID=1 e status=\"PROCESSADO\"\n\nNota: Substitua o ID (1) pelo ID do pedido que deseja buscar"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Atualizar Pedido",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cliente\": \"Cliente Atualizado\",\n  \"produto\": \"Produto Atualizado\",\n  \"quantidade\": 10,\n  \"status\": \"ENTREGUE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9080/pedidos-backend/api/pedidos/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "pedidos-backend",
+            "api",
+            "pedidos",
+            "1"
+          ]
+        },
+        "description": "Atualiza um pedido existente\n\nEsperado:\n- Status: 200 OK\n- Body: Pedido atualizado\n\nNota: Substitua o ID (1) pelo ID do pedido que deseja atualizar"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Deletar Pedido",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:9080/pedidos-backend/api/pedidos/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "pedidos-backend",
+            "api",
+            "pedidos",
+            "1"
+          ]
+        },
+        "description": "Deleta um pedido existente\n\nEsperado:\n- Status: 204 NO CONTENT\n- Body: vazio\n\nNota: Substitua o ID (1) pelo ID do pedido que deseja deletar"
+      },
+      "response": []
+    },
+    {
+      "name": "TEST - Criar 3 Pedidos em Sequência",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cliente\": \"Cliente Teste {{ $timestamp }}\",\n  \"produto\": \"Produto Teste {{ $randomInt }}\",\n  \"quantidade\": {{ $randomInt }}\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9080/pedidos-backend/api/pedidos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9080",
+          "path": [
+            "pedidos-backend",
+            "api",
+            "pedidos"
+          ]
+        },
+        "description": "Teste com dados aleatórios. Execute 3 vezes para criar 3 pedidos.\n\nOs MDBs processarão em paralelo (maxPoolSize=10), demonstrando escalabilidade."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:9080/pedidos-backend/api",
+      "type": "string"
+    },
+    {
+      "key": "pedido_id",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}
+

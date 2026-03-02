@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+
+# Angular builds and cache
+.angular/
+dist/
+
+# Maven builds
+target/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+
+# Logs
+*.log

@@ -1,0 +1,32 @@
+<div class="card">
+  <div class="card-header">Pedidos Cadastrados</div>
+  <div class="card-body">
+    <div *ngIf="loading" class="mb-2">Atualizando lista...</div>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>Status</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of pedidos">
+            <td>{{p.id}}</td>
+            <td>{{p.cliente}}</td>
+            <td>{{p.produto}}</td>
+            <td>{{p.quantidade}}</td>
+            <td>
+              <span class="badge" [ngClass]="{'badge-processed': p.status==='PROCESSADO','badge-pending': p.status!=='PROCESSADO'}">{{p.status||'PENDENTE'}}</span>
+            </td>
+            <td>{{p.data | date:'short'}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

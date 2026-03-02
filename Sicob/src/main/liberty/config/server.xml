@@ -1,0 +1,60 @@
+<server description="Servidor Liberty para pedidos">
+
+    <!-- Features necessárias -->
+    <featureManager>
+        <feature>servlet-3.1</feature>
+        <feature>jaxrs-2.0</feature>
+        <feature>ejbLite-3.2</feature>
+        <feature>jpa-2.1</feature>
+        <feature>jms-2.0</feature>
+        <feature>jdbc-4.1</feature>
+        <feature>cdi-1.2</feature>
+        <!-- Adicionado para simulação local de JMS no Liberty -->
+        <feature>wasJmsServer-1.0</feature>
+        <feature>wasJmsClient-2.0</feature>
+        <feature>wasJmsSecurity-1.0</feature>
+        <!-- Ativa o suporte para MDBs no Open Liberty -->
+        <feature>mdb-3.2</feature>
+    </featureManager>
+
+    <!-- DataSource H2 Local para Sicob (Simulação local) -->
+    <dataSource id="SicobDS" jndiName="jdbc/sicob">
+        <jdbcDriver libraryRef="H2DriverLib"/>
+        <properties URL="jdbc:h2:mem:sicobdb;DB_CLOSE_DELAY=-1;MODE=LEGACY" user="sa" password=""/>
+    </dataSource>
+
+    <application id="pedidos-backend" location="pedidos-backend-1.0-SNAPSHOT.war" name="pedidos-backend" type="war"/>
+
+    <library id="H2DriverLib">
+        <fileset dir="${shared.resource.dir}" includes="h2-*.jar"/>
+    </library>
+
+    <!-- JMS Messaging Engine Local -->
+    <messagingEngine>
+        <queue id="filaPedidos" forceReliability="ReliablePersistent"/>
+        <queue id="filaResposta" forceReliability="ReliablePersistent"/>
+    </messagingEngine>
+
+    <!-- JMS resources locais -->
+    <jmsConnectionFactory id="SicobCF" jndiName="jms/ConnectionFactory">
+        <properties.wasJms />
+    </jmsConnectionFactory>
+    
+    <jmsQueue id="FilaPedidosQueue" jndiName="jms/queue/filaPedidos">
+        <properties.wasJms queueName="filaPedidos" />
+    </jmsQueue>
+
+    <!-- Fila de resposta para MDB -->
+    <jmsQueue id="FilaRespostaQueue" jndiName="jms/queue/filaResposta">
+        <properties.wasJms queueName="filaResposta" />
+    </jmsQueue>
+
+    <!-- Activation Specification para o MDB local -->
+    <jmsActivationSpec id="pedidos-backend-1.0-SNAPSHOT/PedidoConsumerMDB">
+        <properties.wasJms destinationRef="FilaPedidosQueue" destinationType="javax.jms.Queue" maxPoolSize="10" />
+    </jmsActivationSpec>
+
+    <!-- Logging básico -->
+    <logging traceSpecification="*=info"/>
+
+</server>

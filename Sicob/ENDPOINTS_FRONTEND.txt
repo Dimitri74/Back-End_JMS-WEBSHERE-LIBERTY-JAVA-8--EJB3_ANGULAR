@@ -1,0 +1,470 @@
+================================================================================
+DOCUMENTAÇÃO DE ENDPOINTS PARA FRONTEND (Angular 2 + Bootstrap)
+================================================================================
+
+Projeto: Sicob - Sistema de Controle de Pedidos
+Data: 01/03/2026
+Backend: WebSphere Liberty + Java EE (EJB + JPA + JMS)
+Frontend: Angular 2+ com Bootstrap/Material Design
+
+================================================================================
+BASE URL
+================================================================================
+
+Desenvolvimento Local:
+  http://localhost:9080/pedidos-backend/api
+
+Produção (ajustar conforme ambiente):
+  https://api.seudominio.com/pedidos-backend/api
+
+================================================================================
+OPERAÇÕES CRUD
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CRIAR PEDIDO (CREATE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Método HTTP:    POST
+Endpoint:       /api/pedidos
+Content-Type:   application/json
+Autenticação:   Não (neste momento)
+Timeout:        35 segundos (MDB aguarda 30s + margem)
+
+REQUISIÇÃO:
+-----------
+{
+  "cliente": "string (obrigatório)",
+  "produto": "string (obrigatório)",
+  "quantidade": number (obrigatório, maior que 0)
+}
+
+Exemplo:
+{
+  "cliente": "João da Silva",
+  "produto": "Notebook Dell XPS 13",
+  "quantidade": 2
+}
+
+RESPOSTA SUCESSO (201 CREATED):
+-------------------------------
+{
+  "id": 1,
+  "cliente": "João da Silva",
+  "produto": "Notebook Dell XPS 13",
+  "quantidade": 2,
+  "status": "PROCESSADO",
+  "criadoEm": "2026-03-01T15:30:45.123Z"
+}
+
+RESPOSTA COM AVISO (201 CREATED - MDB não respondeu no timeout):
+-----------------------------------------------------------------
+{
+  "id": 2,
+  "cliente": "Maria Santos",
+  "produto": "Mouse Logitech",
+  "quantidade": 5,
+  "status": "PENDENTE",
+  "criadoEm": "2026-03-01T15:35:12.456Z"
+}
+
+Headers retornados:
+  - X-MDB-Status: SUCESSO (se MDB respondeu no timeout)
+  - X-Warning: Pedido criado mas processamento em background (se timeout expirou)
+
+ERROS POSSÍVEIS:
+----------------
+400 Bad Request:
+  - Falta campo obrigatório (cliente, produto, quantidade)
+  - quantidade <= 0
+
+500 Internal Server Error:
+  - Erro ao salvar no banco de dados
+  - Erro ao enviar para fila JMS
+
+Exemplo de erro:
+{
+  "error": "Campo 'quantidade' deve ser maior que 0"
+}
+
+NOTAS:
+------
+- Se status retorna "PROCESSADO": pedido foi processado pelo MDB com sucesso ✅
+- Se status retorna "PENDENTE": MDB ainda está processando (timeout de 30s foi atingido)
+  → Frontend pode exibir mensagem: "Pedido criado! Processamento em andamento..."
+  → Recomenda-se atualizar a lista após alguns segundos para ver o status real
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. OBTER PEDIDO POR ID (READ)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Método HTTP:    GET
+Endpoint:       /api/pedidos/{id}
+Content-Type:   application/json
+Autenticação:   Não (neste momento)
+
+Parâmetros:
+  {id} = ID do pedido (número inteiro)
+
+Exemplo:
+  GET /api/pedidos/1
+
+RESPOSTA SUCESSO (200 OK):
+--------------------------
+{
+  "id": 1,
+  "cliente": "João da Silva",
+  "produto": "Notebook Dell XPS 13",
+  "quantidade": 2,
+  "status": "PROCESSADO",
+  "criadoEm": "2026-03-01T15:30:45.123Z"
+}
+
+ERROS POSSÍVEIS:
+----------------
+404 Not Found:
+  - Pedido com ID informado não existe
+
+500 Internal Server Error:
+  - Erro ao consultar banco de dados
+
+NOTAS:
+------
+- Use este endpoint para obter detalhes de um pedido específico
+- Campo 'status' pode retornar: "PENDENTE" ou "PROCESSADO"
+- 'criadoEm' é um timestamp ISO 8601
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. LISTAR TODOS OS PEDIDOS (READ ALL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Método HTTP:    GET
+Endpoint:       /api/pedidos
+Content-Type:   application/json
+Autenticação:   Não (neste momento)
+
+Exemplo:
+  GET /api/pedidos
+
+RESPOSTA SUCESSO (200 OK):
+--------------------------
+[
+  {
+    "id": 1,
+    "cliente": "João da Silva",
+    "produto": "Notebook Dell XPS 13",
+    "quantidade": 2,
+    "status": "PROCESSADO",
+    "criadoEm": "2026-03-01T15:30:45.123Z"
+  },
+  {
+    "id": 2,
+    "cliente": "Maria Santos",
+    "produto": "Mouse Logitech",
+    "quantidade": 5,
+    "status": "PROCESSADO",
+    "criadoEm": "2026-03-01T15:35:12.456Z"
+  }
+]
+
+RESPOSTA VAZIA (200 OK):
+------------------------
+[]
+
+(array vazio se não houver pedidos)
+
+ERROS POSSÍVEIS:
+----------------
+500 Internal Server Error:
+  - Erro ao consultar banco de dados
+
+NOTAS:
+------
+- Retorna array de todos os pedidos cadastrados
+- Use este endpoint para popular tabela/lista no frontend
+- Recomenda-se fazer cache ou lazy loading se houver muitos pedidos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CAMPOS DA ENTIDADE PEDIDO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Campo:        cliente
+Tipo:         string
+Obrigatório:  Sim
+Tamanho:      Até 255 caracteres
+Descrição:    Nome do cliente
+
+Campo:        produto
+Tipo:         string
+Obrigatório:  Sim
+Tamanho:      Até 255 caracteres
+Descrição:    Nome/descrição do produto
+
+Campo:        quantidade
+Tipo:         number (inteiro positivo)
+Obrigatório:  Sim
+Intervalo:    > 0
+Descrição:    Quantidade de unidades do pedido
+
+Campo:        status
+Tipo:         string (enum)
+Obrigatório:  Não (preenchido automaticamente)
+Valores:      "PENDENTE" | "PROCESSADO"
+Descrição:    Status de processamento do pedido
+  - PENDENTE: ainda aguardando processamento do MDB
+  - PROCESSADO: MDB finalizou o processamento
+
+Campo:        criadoEm
+Tipo:         string (ISO 8601 datetime)
+Obrigatório:  Não (gerado automaticamente)
+Descrição:    Data/hora de criação do pedido
+Formato:      YYYY-MM-DDTHH:mm:ss.SSSZ
+
+================================================================================
+EXEMPLO DE INTEGRAÇÃO COM ANGULAR 2+
+================================================================================
+
+// service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class PedidoService {
+  private baseUrl = 'http://localhost:9080/pedidos-backend/api/pedidos';
+
+  constructor(private http: HttpClient) {}
+
+  // CREATE
+  criarPedido(pedido: any): Observable<any> {
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post(`${this.baseUrl}`, pedido, { headers });
+  }
+
+  // READ
+  obterPedido(id: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${id}`);
+  }
+
+  // READ ALL
+  listarPedidos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}`);
+  }
+}
+
+// component.ts
+import { Component, OnInit } from '@angular/core';
+import { PedidoService } from './pedido.service';
+
+@Component({
+  selector: 'app-pedidos',
+  templateUrl: './pedidos.component.html',
+  styleUrls: ['./pedidos.component.css']
+})
+export class PedidosComponent implements OnInit {
+  pedidos: any[] = [];
+  novoPedido = { cliente: '', produto: '', quantidade: 0 };
+  carregando = false;
+  mensagem = '';
+
+  constructor(private pedidoService: PedidoService) {}
+
+  ngOnInit(): void {
+    this.carregarPedidos();
+  }
+
+  criarPedido(): void {
+    if (!this.novoPedido.cliente || !this.novoPedido.produto || this.novoPedido.quantidade <= 0) {
+      this.mensagem = 'Preencha todos os campos!';
+      return;
+    }
+
+    this.carregando = true;
+    this.pedidoService.criarPedido(this.novoPedido).subscribe(
+      (resposta) => {
+        this.mensagem = `Pedido #${resposta.id} criado! Status: ${resposta.status}`;
+        this.novoPedido = { cliente: '', produto: '', quantidade: 0 };
+        this.carregarPedidos();
+        this.carregando = false;
+      },
+      (erro) => {
+        this.mensagem = `Erro ao criar pedido: ${erro.error.error}`;
+        this.carregando = false;
+      }
+    );
+  }
+
+  carregarPedidos(): void {
+    this.pedidoService.listarPedidos().subscribe(
+      (dados) => {
+        this.pedidos = dados;
+      },
+      (erro) => {
+        console.error('Erro ao carregar pedidos', erro);
+      }
+    );
+  }
+}
+
+// component.html
+<div class="container mt-5">
+  <h1>Pedidos</h1>
+
+  <!-- Formulário de Criação -->
+  <div class="card mb-4">
+    <div class="card-header">Novo Pedido</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Cliente</label>
+        <input type="text" class="form-control" [(ngModel)]="novoPedido.cliente" />
+      </div>
+      <div class="form-group">
+        <label>Produto</label>
+        <input type="text" class="form-control" [(ngModel)]="novoPedido.produto" />
+      </div>
+      <div class="form-group">
+        <label>Quantidade</label>
+        <input type="number" class="form-control" [(ngModel)]="novoPedido.quantidade" />
+      </div>
+      <button class="btn btn-primary" (click)="criarPedido()" [disabled]="carregando">
+        {{ carregando ? 'Criando...' : 'Criar Pedido' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensagem de Status -->
+  <div *ngIf="mensagem" class="alert alert-info">{{ mensagem }}</div>
+
+  <!-- Tabela de Pedidos -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Produto</th>
+        <th>Quantidade</th>
+        <th>Status</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let pedido of pedidos">
+        <td>{{ pedido.id }}</td>
+        <td>{{ pedido.cliente }}</td>
+        <td>{{ pedido.produto }}</td>
+        <td>{{ pedido.quantidade }}</td>
+        <td>
+          <span *ngIf="pedido.status === 'PROCESSADO'" class="badge badge-success">
+            {{ pedido.status }}
+          </span>
+          <span *ngIf="pedido.status === 'PENDENTE'" class="badge badge-warning">
+            {{ pedido.status }}
+          </span>
+        </td>
+        <td>{{ pedido.criadoEm | date:'short' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+================================================================================
+HEADERS HTTP IMPORTANTES
+================================================================================
+
+Request Headers:
+  Content-Type: application/json
+  Accept: application/json
+
+Response Headers (importantes):
+  Content-Type: application/json
+  X-MDB-Status: SUCESSO | (ausente se timeout)
+  X-Warning: (mensagem de aviso se timeout)
+
+Status HTTP Esperados:
+  200 OK           - Sucesso em GET
+  201 CREATED      - Sucesso em POST (pedido criado)
+  400 Bad Request  - Erro de validação
+  404 Not Found    - Recurso não encontrado
+  500 Server Error - Erro no servidor
+
+================================================================================
+TRATAMENTO DE ERROS NO FRONTEND
+================================================================================
+
+Sempre implementar tratamento de erro no subscribe:
+
+this.pedidoService.criarPedido(pedido).subscribe(
+  (sucesso) => {
+    // Mostrar mensagem de sucesso
+    alert('Pedido criado com sucesso!');
+    // Atualizar lista
+    this.carregarPedidos();
+  },
+  (erro) => {
+    // Tratar erros
+    if (erro.status === 400) {
+      alert('Dados inválidos: ' + erro.error.error);
+    } else if (erro.status === 500) {
+      alert('Erro no servidor. Tente novamente mais tarde.');
+    } else {
+      alert('Erro desconhecido: ' + erro.statusText);
+    }
+  }
+);
+
+================================================================================
+RECOMENDAÇÕES PARA O FRONTEND
+================================================================================
+
+1. VALIDAÇÃO
+   - Validar campos obrigatórios (cliente, produto)
+   - Validar quantidade > 0
+   - Exibir mensagens de erro amigáveis
+
+2. UX/UX
+   - Desabilitar botão "Criar" enquanto carrega (mostrar spinner)
+   - Exibir status de processamento (PENDENTE vs PROCESSADO) com cores diferentes
+   - Implementar auto-refresh da lista a cada 5-10 segundos
+   - Mostrar notificação toast para sucesso/erro
+
+3. PERFORMANCE
+   - Implementar paginação se houver muitos pedidos
+   - Usar lazy loading para lista
+   - Cache de requisições GET
+
+4. SEGURANÇA (Futuro)
+   - Implementar autenticação (JWT/OAuth2)
+   - Adicionar headers de segurança
+   - Validar CORS no backend
+
+5. TESTES
+   - Testar fluxo de criação
+   - Testar listagem
+   - Testar obtenção de pedido específico
+   - Testar tratamento de erros
+
+================================================================================
+CONTATO / SUPORTE BACKEND
+================================================================================
+
+Para dúvidas sobre os endpoints ou mudanças:
+
+Backend Repository:
+  C:\Users\dell\workspace_itellJ\Sicob
+
+Documentação Backend:
+  - README.md - Overview geral
+  - QUICK_START.md - Como rodar localmente
+  - TROUBLESHOOTING_MDB.md - Problemas comuns
+
+Postman Collection:
+  - Importe: postman_collection_mdb_resposta.json
+  - Teste todos os endpoints antes de integrar no Frontend
+
+Última Atualização: 01/03/2026
+================================================================================
+

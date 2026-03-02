@@ -1,0 +1,22 @@
+<nav class="navbar navbar-expand-lg bg-primary mb-3">
+  <div class="container-fluid">
+    <span class="navbar-brand text-white">SICCOB – Sistema Cadastral</span>
+  </div>
+</nav>
+<div class="container">
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab==='form'" (click)="activeTab='form'">Cadastro de Pedido</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab==='list'" (click)="activeTab='list'">Lista de Pedidos</a>
+    </li>
+  </ul>
+
+  <div *ngIf="activeTab==='form'">
+    <app-pedido-form></app-pedido-form>
+  </div>
+  <div *ngIf="activeTab==='list'">
+    <app-pedido-list></app-pedido-list>
+  </div>
+</div>

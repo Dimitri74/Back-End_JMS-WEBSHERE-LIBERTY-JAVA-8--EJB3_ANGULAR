@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.2"
+             xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+
+    <!-- Unidade de persistência configurada para usar o DataSource gerenciado pelo Liberty (JTA) -->
+    <persistence-unit name="SicobPU" transaction-type="JTA">
+        <jta-data-source>jdbc/sicob</jta-data-source>
+        <class>com.exemplo.sicob.entity.Pedido</class>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+        <properties>
+            <!-- Propriedades EclipseLink (Padrão Liberty) -->
+            <!-- Desativamos a geração automática de DDL do EclipseLink para criar a tabela manualmente no startup
+                 (EclipseLink estava gerando DDL incompatível com a versão do H2 embutido). -->
+            <property name="eclipselink.ddl-generation" value="none"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="database"/>
+            <property name="eclipselink.deploy-on-startup" value="true"/>
+
+            <!-- Força a plataforma H2 apenas para logs/compatibilidade (opcional) -->
+            <property name="eclipselink.target-database" value="org.eclipse.persistence.platform.database.H2Platform"/>
+
+            <!-- Propriedades Genéricas JPA 2.1+ -->
+            <!-- Não usamos a geração JPA de schema (será criada no startup via DatabaseInit) -->
+            <property name="javax.persistence.schema-generation.database.action" value="none"/>
+            <property name="javax.persistence.sql-load-script-source" value="META-INF/import.sql"/>
+
+            <!-- Logs para diagnóstico -->
+            <property name="eclipselink.logging.level" value="FINEST"/>
+            <property name="eclipselink.logging.parameters" value="true"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>
